@@ -138,10 +138,6 @@ int main(int argc, char *argv[]) {
                         // Wyslanie wiadomosci do klienta
                         buffer[read] = '\0';
                         printf("Client %d: %s\n", i, buffer);
-
-
-                        //sprawdzanie czy klient wyslal wiadomosc "hello"
-                        send(i, buffer, strlen(buffer), 0);
                     }
                 }
             }

@@ -19,6 +19,30 @@ struct connection {
     char namebuffer[100];
 };
 
+char* sendmessage(char* client_name, char option) {
+    static char message[1000];
+    message[0] = '@';
+
+    switch(option) {
+        case 'N': 
+            strncpy(&message[1], client_name, sizeof(message) - 1);
+            message[9] = '0';
+            message[10] = '!';
+            message[11] = 'N';
+            message[12] = ':';
+            for(int i=13;i<999;i++){
+                message[i]='0';
+            }
+            message[999] = '#';
+
+            break;
+        default:
+            message[1] = 'E';
+            break;
+    }
+
+    return message;
+}
 
 int main(int argc, char *argv[]) {
     //sprawdzenie czy podano odpowiednia ilosc argumentow
@@ -59,18 +83,8 @@ int main(int argc, char *argv[]) {
 
         sleep(1);
     
-        //wyslanie nazwy do serwera
-        strcpy(conn.namebuffer, argv[3]);
-        send(conn.sockfd, conn.namebuffer, strlen(conn.namebuffer), 0);
-
-        //wyslanie wiadomosci "hello" do serwera
-        char buffer[200];
-        strcpy(buffer, "hello");
-        send(conn.sockfd, buffer, strlen(buffer), 0);
-
-        //odbior wiadomosci od serwera
-        recv(conn.sockfd, buffer, sizeof(buffer), 0);
-        printf("Server: %s\n", buffer);
+        //wyslanie A1 (N) do serwera
+        send(conn.sockfd, sendmessage(conn.namebuffer, 'N'), 1000, 0);
     }
 
     //zamkniecie polaczenia
