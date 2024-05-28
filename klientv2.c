@@ -19,10 +19,6 @@ struct connection {
     char namebuffer[100];
 };
 
-char* send(char *buffer, int sockfd) {
-    send(sockfd, buffer, strlen(buffer), 0);
-    return buffer;
-}
 
 int main(int argc, char *argv[]) {
     //sprawdzenie czy podano odpowiednia ilosc argumentow
