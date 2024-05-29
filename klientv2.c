@@ -22,6 +22,7 @@ struct connection {
 char* sendmessage(char* client_name, char option) {
  
     static char message[1000];
+    //zerowanie bufora
     bzero(message, 1000);
     message[0] = '@';
 
@@ -36,6 +37,7 @@ char* sendmessage(char* client_name, char option) {
                     message[i] = '0';
                 }
             }
+            
             message[9] = '0';
             message[10] = '!';
             message[11] = 'N';
@@ -72,6 +74,9 @@ int main(int argc, char *argv[]) {
     }
     bzero((char *)&conn.server_addr, sizeof(conn.server_addr));
     bzero((char *)&conn.namebuffer, sizeof(conn.namebuffer));
+
+    //skopiowanie nazwy klienta do struktury
+    strncpy(conn.namebuffer, argv[3], 8);
 
     //sprawdzamy czy podany adres IP jest poprawny
     if (inet_pton(AF_INET, argv[1], &conn.server_addr.sin_addr) <= 0) {
