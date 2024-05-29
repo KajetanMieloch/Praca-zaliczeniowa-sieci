@@ -22,6 +22,29 @@ struct connection {
     char status;
 };
 
+// Na pakiet A1 z komendą N Serwer odpowiada pakietem B1 z komendą P i numerem portu 
+// dla połączenia DATA (z danymi) lub pakietem B2 z komendą X oznaczającą brak nowych 
+// danych. Przed wysłaniem pakietu B1 serwer otwiera gniazdko zasłuchujące na numerze 
+// portu który będzie wyliczany na podstawie port nasłuchujący+1+numer zestawu danych. 
+//char[11] – komenda w formie jednego znaku np. N, P, R, D, E, X
+char* recivemessage(char* message, struct connection *connection) {
+    static char response[1000];
+    bzero(response, 1000);
+    response[0] = '@';
+    char command = message[11];
+    switch(command) {
+        case 'N':
+            // Wysłanie pakietu B1 z komendą P i numerem portu dla połączenia DATA
+            break;
+        case 'D':
+            // Wysłanie pakietu B2 z komendą X oznaczającą brak nowych danych
+            break;
+    }
+    printf("odebrano: %s\n", message);
+    printf("Wysylam: %s\n", response);
+    return response;
+}
+
 int main(int argc, char *argv[]) {
 
     //lista polaczen
@@ -124,7 +147,7 @@ int main(int argc, char *argv[]) {
                     int read = recv(i, buffer, BUFFER_SIZE, 0);
 
                     //Wiadomosc od klienta
-                    printf("Received: %s\n", buffer);
+                    recivemessage(buffer, &connections[i]);
                     
                     if (read < 0) {
                         perror("recv() failed");

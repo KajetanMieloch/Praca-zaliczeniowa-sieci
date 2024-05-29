@@ -37,7 +37,6 @@ char* sendmessage(char* client_name, char option) {
                     message[i] = '0';
                 }
             }
-            
             message[9] = '0';
             message[10] = '!';
             message[11] = 'N';
@@ -93,18 +92,22 @@ int main(int argc, char *argv[]) {
     if (connect(conn.sockfd, (struct sockaddr *)&conn.server_addr, sizeof(conn.server_addr)) < 0) {
         perror("connect() ERROR");
         exit(3);
+    } else {
+        printf("Polaczono z serwerem\n");
+        conn.connected = 1;
     }
 
     while(1){
 
         sleep(1);
     
-        //wyslanie A1 (N) do serwera
-        printf(conn.namebuffer);
+        //A1
         send(conn.sockfd, sendmessage(conn.namebuffer, 'N'), 1000, 0);
     }
 
     //zamkniecie polaczenia
+    printf("Zamykanie polaczenia\n");
+    conn.connected = 0;
     close(conn.sockfd);
     return 0;
 }
