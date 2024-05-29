@@ -20,12 +20,22 @@ struct connection {
 };
 
 char* sendmessage(char* client_name, char option) {
+ 
     static char message[1000];
+    bzero(message, 1000);
     message[0] = '@';
 
     switch(option) {
         case 'N': 
-            strncpy(&message[1], client_name, sizeof(message) - 1);
+            // Skopiowanie maksymalnie 8 znaków z client_name do message[1]
+            strncpy(&message[1], client_name, 8);
+
+            // Wypełnienie pozostałych miejsc od 1 do 8 zerami, jeśli nazwa jest krótsza niż 8 znaków
+            for(int i = 1; i <= 8; i++) {
+                if (message[i] == '\0') {
+                    message[i] = '0';
+                }
+            }
             message[9] = '0';
             message[10] = '!';
             message[11] = 'N';
@@ -41,6 +51,7 @@ char* sendmessage(char* client_name, char option) {
             break;
     }
 
+    printf("Wysylam: %s\n", message);
     return message;
 }
 
@@ -84,6 +95,7 @@ int main(int argc, char *argv[]) {
         sleep(1);
     
         //wyslanie A1 (N) do serwera
+        printf(conn.namebuffer);
         send(conn.sockfd, sendmessage(conn.namebuffer, 'N'), 1000, 0);
     }
 

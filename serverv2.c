@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
         //sprawdzanie czy jakies gniazdo jest gotowe do odczytu
         for (int i = 0; i <= max_fd; i++) {
             if (FD_ISSET(i, &read_fds)) {
+                //Jeżeli gniazdo to gniazdo serwera to znaczy, że jest nowe połączenie
                 if (i == sockfd) {
                     // Accept new client
                     struct sockaddr_in clientaddr;
@@ -121,6 +122,10 @@ int main(int argc, char *argv[]) {
                     // Odczytanie wiadomosci od klienta
                     char buffer[BUFFER_SIZE];
                     int read = recv(i, buffer, BUFFER_SIZE, 0);
+
+                    //Wiadomosc od klienta
+                    printf("Received: %s\n", buffer);
+                    
                     if (read < 0) {
                         perror("recv() failed");
                         exit(EXIT_FAILURE);
@@ -134,10 +139,6 @@ int main(int argc, char *argv[]) {
                                 break;
                             }
                         }
-                    } else {
-                        // Wyslanie wiadomosci do klienta
-                        buffer[read] = '\0';
-                        printf("Client %d: %s\n", i, buffer);
                     }
                 }
             }
