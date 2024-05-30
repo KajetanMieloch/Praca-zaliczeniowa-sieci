@@ -19,6 +19,9 @@ struct connection {
     char namebuffer[100];
 };
 
+
+
+
 char* sendmessage(char* client_name, char option) {
  
     static char message[1000];
