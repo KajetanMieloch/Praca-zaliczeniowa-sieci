@@ -14,6 +14,11 @@
 #define TOTAL_VALUES 100000 // 400 packets
 #define HISTOGRAM_SIZE 16
 
+#define MAX_DATA 100000
+struct CALCDATA{
+uint32_t data[MAX_DATA];
+};
+
 struct connection {
     int sock;
     int send;
@@ -23,38 +28,33 @@ struct connection {
     int connected;
     int error;
     char status;
+    int data_index;
+    struct CALCDATA cdata;
 };
 
-uint32_t bitcnt[HISTOGRAM_SIZE];
+// Dane do obliczeń: są tworzone przez serwer, mają format uint32_t i zakres 0-65535. To 
+// znaczy że każda wartość & 0xffff0000 == 0. Każdy pakiet danych będzie miał wielkość 
+// dokładnie 100000 wartości. Funkcja generująca dane zostanie podana w osobnym 
+// dokumencie. Należy ją włączyć do kodu i wywołać przy każdym tworzeniu nowego 
+// zestawy danych.
 
-void update_histogram(uint32_t *data) {
-    for (int i = 0; i < DATA_SIZE / sizeof(uint32_t); i++) {
-        uint32_t value = data[i];
-        if ((value & 0xFFFF0000) == 0) {
-            for (int bit = 0; bit < 16; bit++) {
-                if (value & (1 << bit)) {
-                    bitcnt[bit]++;
-                }
-            }
-        }
-    }
-}
 
-void handle_data_connection(int udp_sock, struct sockaddr_in clientaddr) {
-    uint32_t data[DATA_SIZE / sizeof(uint32_t) + 1]; // Additional uint32_t for counter
-    socklen_t clientlen = sizeof(clientaddr);
-    for (int i = 0; i < TOTAL_VALUES / (DATA_SIZE / sizeof(uint32_t)); i++) {
-        data[0] = i | 0x55550000; // Counter with 0x55550000 mask
-        for (int j = 1; j < DATA_SIZE / sizeof(uint32_t) + 1; j++) {
-            data[j] = rand() & 0xFFFF; // Random values with lower 16 bits
+int create_data(int idx, struct CALCDATA *cdata)
+{
+    if (cdata != NULL){
+    uint32_t i;
+    uint32_t *value;
+    uint32_t v;
+    value = &cdata->data[0];
+        for (i=0; i<MAX_DATA; i++){
+            v = (uint32_t) rand() ^ (uint32_t) rand();
+            printf("Creating value #%d v=%u addr=%lu \r",i,v,(unsigned long)value);
+            *value = v & 0x0000FFFF;
+            value++;
         }
-        sendto(udp_sock, data, sizeof(data), 0, (struct sockaddr *)&clientaddr, clientlen);
-        // Wait for acknowledgment
-        char ack[1];
-        recvfrom(udp_sock, ack, sizeof(ack), 0, (struct sockaddr *)&clientaddr, &clientlen);
-        // Update histogram
-        update_histogram(&data[1]);
+    return(1);
     }
+return(0);
 }
 
 char* recivemessage(char* message, struct connection *connection, int udp_sock) {
@@ -65,6 +65,7 @@ char* recivemessage(char* message, struct connection *connection, int udp_sock) 
     printf("Received command: %c\n", command); // Debug print
     switch (command) {
         case 'N': {
+            printf("%i",connection->server.sin_port);
             int data_port = connection->port + 1; // Calculate data port
             struct sockaddr_in data_addr = connection->server;
             data_addr.sin_port = htons(data_port);
@@ -72,7 +73,6 @@ char* recivemessage(char* message, struct connection *connection, int udp_sock) 
             // Send response with data port
             sprintf(response, "@000000000!P:%d#", data_port);
             printf("Sending response: %s\n", response); // Debug print
-            handle_data_connection(udp_sock, connection->server);
             break;
         }
         case 'D':
@@ -88,20 +88,24 @@ char* recivemessage(char* message, struct connection *connection, int udp_sock) 
 }
 
 int main(int argc, char *argv[]) {
+
+    int SERWER_PORT = atoi(argv[1]);
     // Lista połączeń
     struct connection connections[MAX_CLIENTS];
     for (int i = 0; i < MAX_CLIENTS; i++) {
         connections[i].connected = 0;
         connections[i].error = 0;
         connections[i].status = ' ';
+        connections[i].port = SERWER_PORT + 1 + i;
+        connections[i].data_index = i;
+        create_data(i, &connections[i].cdata);
+
     }
 
     if (argc < 2) {
         printf("Wywolanie: %s <port>\n", argv[0]);
         exit(1);
     }
-
-    int SERWER_PORT = atoi(argv[1]);
 
     // Inicjalizacja serwera z selectem dla max_clients
     struct sockaddr_in serwer = {
@@ -156,6 +160,9 @@ int main(int argc, char *argv[]) {
                     struct sockaddr_in clientaddr;
                     socklen_t clientlen = sizeof(clientaddr);
                     int client_sock = accept(sockfd, (struct sockaddr *)&clientaddr, &clientlen);
+
+                    int port = SERWER_PORT + 1 + connections[0].data_index;
+
                     if (client_sock < 0) {
                         perror("accept() failed");
                         exit(EXIT_FAILURE);
@@ -167,7 +174,7 @@ int main(int argc, char *argv[]) {
                             connections[j].sock = client_sock;
                             connections[j].connected = 1;
                             connections[j].server = clientaddr;
-                            connections[j].port = ntohs(clientaddr.sin_port);
+                            connections[j].port = port;
                             break;
                         }
                     }

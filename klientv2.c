@@ -165,15 +165,14 @@ int main(int argc, char *argv[]) {
         send(conn.sockfd, sendmessage(conn.namebuffer, 'N'), 1000, 0);
         printf("Wyslano zapytanie o port danych\n");
         // Odbieranie odpowiedzi od serwera
-        char buffer[BUFFER_SIZE];
-        int read = recv(conn.sockfd, buffer, BUFFER_SIZE, 0);
+        char buffer[1000];
+        bzero(buffer, 1000);
+        int read = recv(conn.sockfd, buffer, 1000, 0);
         if (read < 0) {
             perror("recv() failed");
             exit(EXIT_FAILURE);
-        } else if (read == 0) {
-            printf("Server disconnected\n");
-            break;
         }
+        printf("Odebrano od serwera: %s\n", buffer);
 
         buffer[read] = '\0';
         printf("Odebrano od serwera: %s\n", buffer);
